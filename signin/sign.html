@@ -1,0 +1,68 @@
+<html>
+    <head>
+        <title>Login Page</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    </head>
+    <body>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6" >
+                    <h2 class="h2 mb-4" style="padding-top: 30px;font-weight: 700;line-height: 1.3;padding-left: 20px;">Hey there!<br>Welcome back</h2>
+                    <img class="d-block" src="https://hyperlocalcloud.com/images/new-images/easy-login.webp" height="320px" width="420px">
+                    <h6 style="padding-top: 20px;">Don't have an account <a href="./signup.html" style="color: #e22c18;">Sign Up here?</a></h6>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-grid gap-2 mb-4 mt-1" style="padding-bottom: 50px;">
+                        <button class="btn btn-outline-danger" type="button">Sign in with Google</button>
+                        <button class="btn btn-outline-danger" type="button">Sign in with Facebbok</button>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <hr class="w-100">
+                        <div class="px-3">Or</div>
+                        <hr class="w-100">
+                    </div>
+                    <form id="loginForm">
+                        <h6>Email address</h6>
+                        <div class="form-floating mb-3">
+                          <input type="email" class="form-control" id="loginEmail" placeholder="name@example.com">
+                          <label for="loginEmail">Enter your email</label>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label mb-0"><h6>Password</h6></label><a class="fs-sm" href="#" style="color: #e22c18;">Forgot password?</a>
+                        </div>
+                        <div class="form-floating mb-4">
+                          <input type="password" class="form-control" id="loginPassword" placeholder="Password">
+                          <label for="loginPassword">Enter Password</label>
+                        </div>
+                        <div id="loginError" class="text-danger mb-2" style="display:none;"></div>
+                        <button class="btn w-100 py-2" type="submit" style="background-color: #e22c18;color:white;">Sign in</button>
+                      </form>
+                      <script>
+                        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                          e.preventDefault();
+                          const email = document.getElementById('loginEmail').value;
+                          const password = document.getElementById('loginPassword').value;
+                          const errorEl = document.getElementById('loginError');
+                          try {
+                            const res = await fetch('/api/auth/login', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ email, password })
+                            });
+                            const data = await res.json();
+                            if (!res.ok) { errorEl.textContent = data.message; errorEl.style.display = 'block'; return; }
+                            localStorage.setItem('token', data.token);
+                            localStorage.setItem('user', JSON.stringify(data.user));
+                            window.location.href = '/index.html';
+                          } catch {
+                            errorEl.textContent = 'Server error. Try again.';
+                            errorEl.style.display = 'block';
+                          }
+                        });
+                      </script>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

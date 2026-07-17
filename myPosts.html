@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Posts</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+    <style>
+        body { background: #f5f6fa; padding-top: 70px; }
+
+        .listing-card, .job-card {
+            border: none;
+            border-radius: 14px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            background: #fff;
+        }
+        .listing-card:hover, .job-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+        }
+
+        .card-thumb {
+            height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .card-thumb i.main-icon { font-size: 2.5rem; color: rgba(255,255,255,0.5); }
+
+        .badge-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.4);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: #fff;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .delete-btn:hover { background: #e22c18; }
+
+        .amenity-pill, .tag-pill {
+            background: #f0f0f0;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.78rem;
+            color: #555;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .tag-pill.remote { background: #e8f5e9; color: #2e7d32; }
+
+        .price-tag {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e22c18;
+        }
+        .salary-tag {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e22c18;
+        }
+
+        .contact-row {
+            background: #fafafa;
+            border-top: 1px solid #f0f0f0;
+            padding: 10px 16px;
+            font-size: 0.82rem;
+            color: #555;
+        }
+
+        .empty-state { text-align: center; padding: 60px 0; color: #aaa; }
+
+        .nav-tabs .nav-link { color: #555; font-weight: 500; }
+        .nav-tabs .nav-link.active { color: #e22c18; border-bottom: 2px solid #e22c18; background: none; }
+    </style>
+</head>
+<body>
+    <script>
+      if (!localStorage.getItem('token')) { window.location.replace('/signin/sign.html'); }
+    </script>
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-white shadow-sm" style="height:70px;">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="/index.html">
+            <i class="fa-solid fa-magnifying-glass" style="background:#e22c18;padding:5px;border-radius:50%;color:#fff;"></i>
+            Locate<span style="color:#e22c18;">Space</span>
+          </a>
+          <div class="navbar-nav me-auto">
+            <a class="nav-link" href="/index.html">Home</a>
+            <a class="nav-link" href="/property/house.html">Properties</a>
+            <a class="nav-link" href="/job/job.html">Jobs</a>
+            <a class="nav-link active" href="/myPosts.html">My Posts</a>
+          </div>
+          <div id="navAuth"></div>
+        </div>
+    </nav>
+    <script>
+      (function() {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        const el = document.getElementById('navAuth');
+        if (token && user) {
+          el.innerHTML = '<span class="me-3 fw-semibold">Hi, ' + user.name + '</span><button class="btn btn-outline-danger btn-sm" onclick="localStorage.clear();window.location.reload()">Logout</button>';
+        } else {
+          el.innerHTML = '<a href="/signin/sign.html"><button class="btn btn-danger">Login</button></a>';
+        }
+      })();
+    </script>
+
+    <div class="container py-4">
+        <h2 class="fw-bold mb-1">My Posts</h2>
+        <p class="text-muted mb-4">Everything you've listed on LocateSpace</p>
+
+        <ul class="nav nav-tabs mb-4" id="postTabs">
+            <li class="nav-item">
+                <button class="nav-link active" id="tab-properties" onclick="showTab('properties')">
+                    <i class="fa-solid fa-house me-1"></i> Properties
+                    <span class="badge bg-secondary ms-1" id="prop-count">0</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="tab-jobs" onclick="showTab('jobs')">
+                    <i class="fa-solid fa-briefcase me-1"></i> Jobs
+                    <span class="badge bg-secondary ms-1" id="job-count">0</span>
+                </button>
+            </li>
+        </ul>
+
+        <div id="panel-properties">
+            <div class="row g-4" id="my-listings"></div>
+        </div>
+        <div id="panel-jobs" style="display:none;">
+            <div class="row g-4" id="my-jobs"></div>
+        </div>
+    </div>
+
+    <script>
+      /* ── constants ── */
+      const PROP_GRADIENTS = {
+        house:'linear-gradient(135deg,#f5576c 0%,#f093fb 100%)',
+        apartment:'linear-gradient(135deg,#4facfe 0%,#00f2fe 100%)',
+        shop:'linear-gradient(135deg,#43e97b 0%,#38f9d7 100%)',
+        'daily-rental':'linear-gradient(135deg,#fa709a 0%,#fee140 100%)',
+      };
+      const PROP_ICONS = { house:'fa-house', apartment:'fa-building', shop:'fa-store', 'daily-rental':'fa-calendar-days' };
+      const PROP_LABELS = { house:'House', apartment:'Apartment', 'daily-rental':'Daily Rental', shop:'Shop' };
+
+      const JOB_GRADIENTS = {
+        engineering:'linear-gradient(135deg,#4facfe 0%,#00f2fe 100%)',
+        it:'linear-gradient(135deg,#43e97b 0%,#38f9d7 100%)',
+        delivery:'linear-gradient(135deg,#f7971e 0%,#ffd200 100%)',
+        marketing:'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)',
+        accounting:'linear-gradient(135deg,#667eea 0%,#764ba2 100%)',
+        medicine:'linear-gradient(135deg,#11998e 0%,#38ef7d 100%)',
+        agriculture:'linear-gradient(135deg,#56ab2f 0%,#a8e063 100%)',
+        security:'linear-gradient(135deg,#373b44 0%,#4286f4 100%)',
+        teaching:'linear-gradient(135deg,#fc4a1a 0%,#f7b733 100%)',
+        'customer-service':'linear-gradient(135deg,#ee9ca7 0%,#ffdde1 100%)',
+      };
+      const JOB_ICONS = {
+        engineering:'fa-gears', it:'fa-laptop-code', delivery:'fa-truck',
+        marketing:'fa-bullhorn', accounting:'fa-file-invoice-dollar', medicine:'fa-stethoscope',
+        agriculture:'fa-wheat-awn', security:'fa-shield', teaching:'fa-chalkboard-user',
+        'customer-service':'fa-headset',
+      };
+
+      let myListings = [];
+      let myJobs = [];
+
+      /* ── tabs ── */
+      function showTab(tab) {
+        document.getElementById('panel-properties').style.display = tab === 'properties' ? '' : 'none';
+        document.getElementById('panel-jobs').style.display       = tab === 'jobs'       ? '' : 'none';
+        document.getElementById('tab-properties').classList.toggle('active', tab === 'properties');
+        document.getElementById('tab-jobs').classList.toggle('active', tab === 'jobs');
+      }
+
+      /* ── property card ── */
+      function renderPropertyCard(l) {
+        const pType    = l.propertyType || l.type || '';
+        const gradient = PROP_GRADIENTS[pType] || 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+        const icon     = PROP_ICONS[pType] || 'fa-building-user';
+        const label    = PROP_LABELS[pType] || pType || 'Property';
+        const catLabel = l.category === 'rent' ? 'For Rent' : l.category === 'sale' ? 'For Sale' : '';
+        const location = [l.city, l.district].filter(Boolean).join(', ');
+        const amenities = [
+          l.area      ? `<span class="amenity-pill"><i class="fa-solid fa-expand"></i> ${l.area} sq.m</span>` : '',
+          l.bedrooms  ? `<span class="amenity-pill"><i class="fa-solid fa-bed"></i> ${l.bedrooms} Bed</span>` : '',
+          l.bathrooms ? `<span class="amenity-pill"><i class="fa-solid fa-bath"></i> ${l.bathrooms} Bath</span>` : '',
+        ].filter(Boolean).join('');
+
+        return `
+          <div class="col-md-6 col-lg-4" id="card-${l._id}">
+            <div class="listing-card h-100 d-flex flex-column">
+              <div class="card-thumb" style="background:${gradient};">
+                <i class="fa-solid ${icon} main-icon"></i>
+                <div class="badge-overlay">
+                  <span class="badge" style="background:#e22c18;">${label}</span>
+                  ${catLabel ? `<span class="badge bg-dark bg-opacity-75">${catLabel}</span>` : ''}
+                </div>
+                <button class="delete-btn" onclick="deleteListing('${l._id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+              </div>
+              <div class="card-body p-3 flex-grow-1 d-flex flex-column">
+                <h5 class="fw-bold mb-1" style="font-size:1rem;">${l.title}</h5>
+                ${location ? `<p class="text-muted small mb-2"><i class="fa-solid fa-location-dot me-1"></i>${location}</p>` : ''}
+                ${amenities ? `<div class="d-flex flex-wrap gap-1 mb-2">${amenities}</div>` : ''}
+                <div class="mt-auto pt-2">
+                  <div class="price-tag">₹${l.price.toLocaleString('en-IN')}<span style="font-size:0.8rem;font-weight:400;color:#888;"> / ${l.priceUnit || 'month'}</span></div>
+                </div>
+              </div>
+              <div class="contact-row">
+                ${l.contactName ? `<div><i class="fa-solid fa-user me-1 text-muted"></i>${l.contactName}</div>` : ''}
+                <div class="d-flex gap-3 mt-1">
+                  ${l.contactPhone ? `<span><i class="fa-solid fa-phone me-1 text-muted"></i>${l.contactPhone}</span>` : ''}
+                  ${l.contactEmail ? `<span><i class="fa-solid fa-envelope me-1 text-muted"></i>${l.contactEmail}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      /* ── job card ── */
+      function renderJobCard(j) {
+        const cat      = (j.category || '').toLowerCase();
+        const gradient = JOB_GRADIENTS[cat] || 'linear-gradient(135deg,#868f96 0%,#596164 100%)';
+        const icon     = JOB_ICONS[cat] || 'fa-briefcase';
+        const catLabel = j.category ? j.category.charAt(0).toUpperCase() + j.category.slice(1) : 'General';
+        const location = [j.city, j.district].filter(Boolean).join(', ');
+
+        return `
+          <div class="col-md-6 col-lg-4" id="card-${j._id}">
+            <div class="job-card h-100 d-flex flex-column">
+              <div class="card-thumb" style="background:${gradient};">
+                <i class="fa-solid ${icon} main-icon"></i>
+                <div class="badge-overlay">
+                  <span class="badge" style="background:#e22c18;">${catLabel}</span>
+                </div>
+                <button class="delete-btn" onclick="deleteJob('${j._id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+              </div>
+              <div class="card-body p-3 flex-grow-1 d-flex flex-column">
+                <h5 class="fw-bold mb-1" style="font-size:1rem;">${j.title}</h5>
+                ${j.company ? `<p class="mb-1 fw-semibold" style="color:#444;font-size:0.88rem;"><i class="fa-solid fa-building me-1 text-muted"></i>${j.company}</p>` : ''}
+                ${location ? `<p class="text-muted small mb-2"><i class="fa-solid fa-location-dot me-1"></i>${location}</p>` : ''}
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                  ${j.jobType ? `<span class="tag-pill"><i class="fa-solid fa-clock"></i> ${j.jobType}</span>` : ''}
+                  ${j.jobMode ? `<span class="tag-pill ${j.jobMode === 'remote' ? 'remote' : ''}"><i class="fa-solid fa-wifi"></i> ${j.jobMode}</span>` : ''}
+                </div>
+                <div class="mt-auto pt-2">
+                  ${j.salary ? `<div class="salary-tag"><i class="fa-solid fa-money-bill-wave me-1" style="font-size:0.9rem;"></i>${j.salary}</div>` : ''}
+                </div>
+              </div>
+              <div class="contact-row">
+                ${j.contactName ? `<div><i class="fa-solid fa-user me-1 text-muted"></i>${j.contactName}</div>` : ''}
+                <div class="d-flex gap-3 mt-1">
+                  ${j.contactPhone ? `<span><i class="fa-solid fa-phone me-1 text-muted"></i>${j.contactPhone}</span>` : ''}
+                  ${j.contactEmail ? `<span><i class="fa-solid fa-envelope me-1 text-muted"></i>${j.contactEmail}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      /* ── delete ── */
+      async function deleteListing(id) {
+        if (!confirm('Delete this listing?')) return;
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/listings/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) {
+          myListings = myListings.filter(l => l._id !== id);
+          renderListings();
+        } else { alert('Could not delete.'); }
+      }
+
+      async function deleteJob(id) {
+        if (!confirm('Delete this job posting?')) return;
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/jobs/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) {
+          myJobs = myJobs.filter(j => j._id !== id);
+          renderJobs();
+        } else { alert('Could not delete.'); }
+      }
+
+      /* ── render ── */
+      function renderListings() {
+        const el = document.getElementById('my-listings');
+        document.getElementById('prop-count').textContent = myListings.length;
+        if (myListings.length === 0) {
+          el.innerHTML = `<div class="col-12 empty-state">
+            <i class="fa-solid fa-house fa-2x mb-3"></i>
+            <p>You haven't posted any properties yet.</p>
+            <a href="/property/upload/upload.html" class="btn btn-danger btn-sm">Post a Property</a>
+          </div>`;
+        } else {
+          el.innerHTML = myListings.map(renderPropertyCard).join('');
+        }
+      }
+
+      function renderJobs() {
+        const el = document.getElementById('my-jobs');
+        document.getElementById('job-count').textContent = myJobs.length;
+        if (myJobs.length === 0) {
+          el.innerHTML = `<div class="col-12 empty-state">
+            <i class="fa-solid fa-briefcase fa-2x mb-3"></i>
+            <p>You haven't posted any jobs yet.</p>
+            <a href="/job/uploadjob/uploadJob.html" class="btn btn-danger btn-sm">Post a Job</a>
+          </div>`;
+        } else {
+          el.innerHTML = myJobs.map(renderJobCard).join('');
+        }
+      }
+
+      /* ── load ── */
+      async function load() {
+        const token = localStorage.getItem('token');
+        const headers = { 'Authorization': 'Bearer ' + token };
+        try {
+          const [lRes, jRes] = await Promise.all([
+            fetch('/api/listings/mine', { headers }),
+            fetch('/api/jobs/mine', { headers }),
+          ]);
+          myListings = await lRes.json();
+          myJobs     = await jRes.json();
+          renderListings();
+          renderJobs();
+        } catch {
+          document.getElementById('my-listings').innerHTML = '<p class="text-danger">Failed to load. Make sure the server is running.</p>';
+        }
+      }
+
+      load();
+    </script>
+</body>
+</html>
