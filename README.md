@@ -82,7 +82,7 @@ Locate-Space/
    node index.js
    ```
 
-5. Open `http://localhost:5000` in your browser
+5. Open `https://locate-space-hzh1.onrender.com` in your browser
 
 ## API Endpoints
 

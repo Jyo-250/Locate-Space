@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import axios from 'axios'
 
-const API = 'http://localhost:5000'
+const API = 'https://locate-space-hzh1.onrender.com'
 
 export default function MyPostsPage() {
   const { user, token } = useAuth()

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
-const API = 'http://localhost:5000'
+const API = 'https://locate-space-hzh1.onrender.com'
 
 const CATEGORIES = ['All', 'technology', 'healthcare', 'education', 'finance', 'marketing', 'design', 'sales', 'engineering', 'hospitality', 'other']
 
