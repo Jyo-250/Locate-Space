@@ -6,8 +6,7 @@ export default function Navbar() {
   const { user, logout } = useAuth()
 
   function handleLogout() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    logout()
     navigate('/')
   }
 
