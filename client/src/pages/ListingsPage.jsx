@@ -58,7 +58,7 @@ export default function ListingsPage() {
       ) : (
         <div style={styles.grid}>
           {filtered.map(listing => (
-            <div key={listing._id} style={styles.card}>
+            <div key={listing._id} style={styles.card} onClick={() => navigate(`/listings/${listing._id}`)} >
               <div style={styles.cardType}>{listing.propertyType}</div>
               <h3 style={styles.cardTitle}>{listing.title}</h3>
               <p style={styles.cardCity}>📍 {listing.city}, {listing.district}</p>
@@ -86,7 +86,7 @@ const styles = {
   typeBtn: { padding: '8px 20px', border: '2px solid #1a1a2e', borderRadius: '20px', background: '#fff', cursor: 'pointer', fontSize: '14px' },
   typeBtnActive: { background: '#1a1a2e', color: '#fff' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' },
-  card: { background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' },
+  card: { background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)',  cursor: 'pointer' },
   cardType: { display: 'inline-block', background: '#e94560', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', marginBottom: '12px', textTransform: 'capitalize' },
   cardTitle: { fontSize: '18px', color: '#1a1a2e', marginBottom: '8px' },
   cardCity: { color: '#666', fontSize: '14px', marginBottom: '8px' },

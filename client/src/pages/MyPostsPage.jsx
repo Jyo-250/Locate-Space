@@ -5,6 +5,9 @@ import axios from 'axios'
 
 const API = 'https://locate-space-hzh1.onrender.com'
 
+const emptyListing = { title: '', propertyType: 'house', city: '', district: '', price: '', priceUnit: 'month', description: '', bedrooms: '', bathrooms: '', area: '', contactName: '', contactPhone: '' }
+const emptyJob = { title: '', category: 'technology',  city: '', district: '', description: '', contactPhone: '' }
+
 export default function MyPostsPage() {
   const { user, token } = useAuth()
   const navigate = useNavigate()
@@ -12,8 +15,9 @@ export default function MyPostsPage() {
   const [jobs, setJobs] = useState([])
   const [tab, setTab] = useState('listings')
   const [showForm, setShowForm] = useState(false)
-  const [listingForm, setListingForm] = useState({ title: '', propertyType: 'house', city: '', district: '', price: '', priceUnit: 'month', description: '', bedrooms: '', bathrooms: '', area: '', contactName: '', contactPhone: '' })
-  const [jobForm, setJobForm] = useState({ title: '', category: 'technology', location: '', description: '', contactPhone: '' })
+  const [editingId, setEditingId] = useState(null)
+  const [listingForm, setListingForm] = useState(emptyListing)
+  const [jobForm, setJobForm] = useState(emptyJob)
 
   useEffect(() => {
     if (!user) { navigate('/login'); return }
@@ -31,36 +35,65 @@ export default function MyPostsPage() {
     })
   }
 
-  async function handleCreateListing(e) {
-    e.preventDefault()
-    const headers = { Authorization: `Bearer ${token}` }
-    const res = await axios.post(`${API}/api/listings`, listingForm, { headers })
-    setListings(prev => [res.data, ...prev])
-    setShowForm(false)
-    setListingForm({ title: '', propertyType: 'house', city: '', district: '', price: '', priceUnit: 'month', description: '', bedrooms: '', bathrooms: '', area: '', contactName: '', contactPhone: '' })
+  function handleEditListing(l) {
+    setEditingId(l._id)
+    setListingForm({ title: l.title, propertyType: l.propertyType, city: l.city, district: l.district, price: l.price, priceUnit: l.priceUnit, description: l.description, bedrooms: l.bedrooms || '', bathrooms: l.bathrooms || '', area: l.area || '', contactName: l.contactName || '', contactPhone: l.contactPhone || '' })
+    setTab('listings')
+    setShowForm(true)
   }
 
-  async function handleCreateJob(e) {
+  function handleEditJob(j) {
+    setEditingId(j._id)
+    setJobForm({ title: j.title, category: j.category, city: j.city || '', district: j.district || '', description: j.description, contactPhone: j.contactPhone || '' })
+    setTab('jobs')
+    setShowForm(true)
+  }
+
+  function handleCancel() {
+    setShowForm(false)
+    setEditingId(null)
+    setListingForm(emptyListing)
+    setJobForm(emptyJob)
+  }
+
+  async function handleSubmitListing(e) {
     e.preventDefault()
     const headers = { Authorization: `Bearer ${token}` }
-    const res = await axios.post(`${API}/api/jobs`, jobForm, { headers })
-    setJobs(prev => [res.data, ...prev])
-    setShowForm(false)
-    setJobForm({ title: '', category: 'technology', location: '', description: '', contactPhone: '' })
+    if (editingId) {
+        await axios.put(`${API}/api/listings/${editingId}`, listingForm, { headers })
+        setListings(prev => prev.map(l => l._id === editingId ? { ...l, ...listingForm } : l))
+    } else {
+      const res = await axios.post(`${API}/api/listings`, listingForm, { headers })
+      setListings(prev => [res.data, ...prev])
+    }
+    handleCancel()
+  }
+
+  async function handleSubmitJob(e) {
+    e.preventDefault()
+    const headers = { Authorization: `Bearer ${token}` }
+    if (editingId) {
+        await axios.put(`${API}/api/jobs/${editingId}`, jobForm, { headers })
+        setJobs(prev => prev.map(j => j._id === editingId ? { ...j, ...jobForm } : j))
+    } else {
+      const res = await axios.post(`${API}/api/jobs`, jobForm, { headers })
+      setJobs(prev => [res.data, ...prev])
+    }
+    handleCancel()
   }
 
   return (
     <div style={styles.page}>
       <div style={styles.header}>
         <h2 style={styles.heading}>My Posts</h2>
-        <button style={styles.newBtn} onClick={() => setShowForm(!showForm)}>
+        <button style={styles.newBtn} onClick={showForm ? handleCancel : () => { setEditingId(null); setShowForm(true) }}>
           {showForm ? 'Cancel' : '+ New Post'}
         </button>
       </div>
 
       {showForm && tab === 'listings' && (
-        <form onSubmit={handleCreateListing} style={styles.form}>
-          <h3 style={styles.formTitle}>Post a Property</h3>
+        <form onSubmit={handleSubmitListing} style={styles.form}>
+          <h3 style={styles.formTitle}>{editingId ? 'Edit Property' : 'Post a Property'}</h3>
           <div style={styles.formGrid}>
             <input style={styles.input} placeholder="Title" value={listingForm.title} onChange={e => setListingForm({...listingForm, title: e.target.value})} required />
             <select style={styles.input} value={listingForm.propertyType} onChange={e => setListingForm({...listingForm, propertyType: e.target.value})}>
@@ -84,13 +117,13 @@ export default function MyPostsPage() {
             <input style={styles.input} placeholder="Contact Phone" value={listingForm.contactPhone} onChange={e => setListingForm({...listingForm, contactPhone: e.target.value})} />
           </div>
           <textarea style={styles.textarea} placeholder="Description" value={listingForm.description} onChange={e => setListingForm({...listingForm, description: e.target.value})} />
-          <button style={styles.submitBtn} type="submit">Post Property</button>
+          <button style={styles.submitBtn} type="submit">{editingId ? 'Update Property' : 'Post Property'}</button>
         </form>
       )}
 
       {showForm && tab === 'jobs' && (
-        <form onSubmit={handleCreateJob} style={styles.form}>
-          <h3 style={styles.formTitle}>Post a Job</h3>
+        <form onSubmit={handleSubmitJob} style={styles.form}>
+          <h3 style={styles.formTitle}>{editingId ? 'Edit Job' : 'Post a Job'}</h3>
           <div style={styles.formGrid}>
             <input style={styles.input} placeholder="Job Title" value={jobForm.title} onChange={e => setJobForm({...jobForm, title: e.target.value})} required />
             <select style={styles.input} value={jobForm.category} onChange={e => setJobForm({...jobForm, category: e.target.value})}>
@@ -98,11 +131,12 @@ export default function MyPostsPage() {
                 <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
               ))}
             </select>
-            <input style={styles.input} placeholder="Location" value={jobForm.location} onChange={e => setJobForm({...jobForm, location: e.target.value})} />
+            <input style={styles.input} placeholder="City" value={jobForm.city} onChange={e => setJobForm({...jobForm, city: e.target.value})} />
+            <input style={styles.input} placeholder="District" value={jobForm.district} onChange={e => setJobForm({...jobForm, district: e.target.value})} />
             <input style={styles.input} placeholder="Contact Phone" value={jobForm.contactPhone} onChange={e => setJobForm({...jobForm, contactPhone: e.target.value})} />
           </div>
           <textarea style={styles.textarea} placeholder="Job Description" value={jobForm.description} onChange={e => setJobForm({...jobForm, description: e.target.value})} />
-          <button style={styles.submitBtn} type="submit">Post Job</button>
+          <button style={styles.submitBtn} type="submit">{editingId ? 'Update Job' : 'Post Job'}</button>
         </form>
       )}
 
@@ -119,7 +153,10 @@ export default function MyPostsPage() {
               <h3 style={styles.cardTitle}>{l.title}</h3>
               <p style={styles.cardCity}>📍 {l.city}, {l.district}</p>
               <p style={styles.cardPrice}>₹{l.price} / {l.priceUnit}</p>
-              <button style={styles.deleteBtn} onClick={() => handleDelete(l._id, 'listing')}>Delete</button>
+              <div style={styles.btnRow}>
+                <button style={styles.editBtn} onClick={() => handleEditListing(l)}>Edit</button>
+                <button style={styles.deleteBtn} onClick={() => handleDelete(l._id, 'listing')}>Delete</button>
+              </div>
             </div>
           ))}
         </div>
@@ -131,8 +168,11 @@ export default function MyPostsPage() {
             <div key={j._id} style={styles.card}>
               <div style={styles.cardCat}>{j.category}</div>
               <h3 style={styles.cardTitle}>{j.title}</h3>
-              <p style={styles.cardCity}>📍 {j.location}</p>
-              <button style={styles.deleteBtn} onClick={() => handleDelete(j._id, 'job')}>Delete</button>
+              {(j.city || j.district) && <p style={styles.cardCity}>📍 {j.city}{j.district ? `, ${j.district}` : ''}</p>}
+              <div style={styles.btnRow}>
+                <button style={styles.editBtn} onClick={() => handleEditJob(j)}>Edit</button>
+                <button style={styles.deleteBtn} onClick={() => handleDelete(j._id, 'job')}>Delete</button>
+              </div>
             </div>
           ))}
         </div>
@@ -162,6 +202,8 @@ const styles = {
   cardTitle: { fontSize: '18px', color: '#1a1a2e', marginBottom: '8px' },
   cardCity: { color: '#666', fontSize: '14px', marginBottom: '8px' },
   cardPrice: { color: '#e94560', fontWeight: 'bold', fontSize: '16px', marginBottom: '16px' },
+  btnRow: { display: 'flex', gap: '8px' },
+  editBtn: { padding: '8px 16px', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' },
   deleteBtn: { padding: '8px 16px', background: '#ff4d4d', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' },
   msg: { color: '#888', fontSize: '16px' }
 }

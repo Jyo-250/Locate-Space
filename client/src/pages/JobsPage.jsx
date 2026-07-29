@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 const API = 'https://locate-space-hzh1.onrender.com'
@@ -6,6 +7,7 @@ const API = 'https://locate-space-hzh1.onrender.com'
 const CATEGORIES = ['All', 'technology', 'healthcare', 'education', 'finance', 'marketing', 'design', 'sales', 'engineering', 'hospitality', 'other']
 
 export default function JobsPage() {
+  const navigate = useNavigate()
   const [jobs, setJobs] = useState([])
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
@@ -21,7 +23,7 @@ export default function JobsPage() {
   const filtered = jobs.filter(j => {
     const matchCat = category === 'All' || j.category === category
     const matchSearch = j.title?.toLowerCase().includes(search.toLowerCase()) ||
-      j.location?.toLowerCase().includes(search.toLowerCase())
+      j.city?.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
   })
 
@@ -56,10 +58,11 @@ export default function JobsPage() {
       ) : (
         <div style={styles.grid}>
           {filtered.map(job => (
-            <div key={job._id} style={styles.card}>
+            <div key={job._id} style={styles.card} onClick={() => navigate(`/jobs/${job._id}`)}>
               <div style={styles.cardCat}>{job.category}</div>
               <h3 style={styles.cardTitle}>{job.title}</h3>
-              <p style={styles.cardLocation}>📍 {job.location}</p>
+              <input style={styles.input} placeholder="City" value={jobForm.city} onChange={e => setJobForm({...jobForm, city: e.target.value})} />
+              <input style={styles.input} placeholder="District" value={jobForm.district} onChange={e => setJobForm({...jobForm, district: e.target.value})} />
               <p style={styles.cardDesc}>{job.description?.slice(0, 120)}...</p>
               <div style={styles.cardFooter}>
                 <span style={styles.cardContact}>📞 {job.contactPhone}</span>
@@ -81,7 +84,7 @@ const styles = {
   catBtn: { padding: '8px 20px', border: '2px solid #1a1a2e', borderRadius: '20px', background: '#fff', cursor: 'pointer', fontSize: '14px' },
   catBtnActive: { background: '#1a1a2e', color: '#fff' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' },
-  card: { background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' },
+  card: { background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', cursor: 'pointer' },
   cardCat: { display: 'inline-block', background: '#1a1a2e', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', marginBottom: '12px', textTransform: 'capitalize' },
   cardTitle: { fontSize: '18px', color: '#1a1a2e', marginBottom: '8px' },
   cardLocation: { color: '#666', fontSize: '14px', marginBottom: '8px' },
