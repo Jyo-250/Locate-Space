@@ -27,11 +27,6 @@ export default function LoginPage() {
     }
   }
 
-  function handleDemoLogin() {
-    login({ name: 'Demo User', email: 'demo@test.com' }, 'demo-token')
-    navigate('/')
-  }
-
   return (
     <div style={styles.container}>
       <div style={styles.card}>
@@ -41,9 +36,6 @@ export default function LoginPage() {
           <input style={styles.input} type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
           <input style={styles.input} type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} required />
           <button style={styles.btn} type="submit">Login</button>
-          <button type="button" onClick={handleDemoLogin} style={{...styles.btn, background: '#555', marginTop: '10px'}}>
-  Demo Login (Testing Only)
-</button>
         </form>
         <p style={styles.footer}>Don't have an account? <Link to="/register">Register</Link></p>
       </div>

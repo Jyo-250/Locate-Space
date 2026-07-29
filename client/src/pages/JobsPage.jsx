@@ -61,8 +61,8 @@ export default function JobsPage() {
             <div key={job._id} style={styles.card} onClick={() => navigate(`/jobs/${job._id}`)}>
               <div style={styles.cardCat}>{job.category}</div>
               <h3 style={styles.cardTitle}>{job.title}</h3>
-              <input style={styles.input} placeholder="City" value={jobForm.city} onChange={e => setJobForm({...jobForm, city: e.target.value})} />
-              <input style={styles.input} placeholder="District" value={jobForm.district} onChange={e => setJobForm({...jobForm, district: e.target.value})} />
+              <p style={styles.cardLocation}>📍 {job.city}{job.district ? `, ${job.district}` : ''}</p>
+              <p style={styles.cardDesc}></p>
               <p style={styles.cardDesc}>{job.description?.slice(0, 120)}...</p>
               <div style={styles.cardFooter}>
                 <span style={styles.cardContact}>📞 {job.contactPhone}</span>
